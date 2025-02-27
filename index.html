@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Tracker</title>
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="/image/Gemini_Generated_Image_f92gqrf92gqrf92g.jpg"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="bg-purple-100">
+    <div class="container mx-auto p-4">
+      <!-- Header -->
+      <h1 class="text-3xl font-bold text-center mb-8">Expense Tracker</h1>
+
+      <!-- Add Transaction Form -->
+      <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-xl font-semibold mb-4">Add Transaction</h2>
+        <form
+          id="transactionForm"
+          class="grid grid-cols-1 md:grid-cols-4 gap-4"
+        >
+          <input
+            type="text"
+            id="title"
+            placeholder="Title"
+            class="p-2 border rounded-md"
+            required
+          />
+          <input
+            type="number"
+            id="amount"
+            placeholder="Amount"
+            class="p-2 border rounded-md"
+            required
+          />
+          <input type="date" id="date" class="p-2 border rounded-md" required />
+          <select id="type" class="p-2 border rounded-md">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+          <button
+            type="submit"
+            class="bg-blue-800 text-white p-2 rounded-md hover:bg-blue-600"
+          >
+            Add Transaction
+          </button>
+        </form>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-green-100 p-4 rounded-lg">
+          <h3 class="text-gray-600">Total Income</h3>
+          <p class="text-2xl font-bold" id="totalIncome">₹0</p>
+        </div>
+        <div class="bg-red-100 p-4 rounded-lg">
+          <h3 class="text-gray-600">Total Expense</h3>
+          <p class="text-2xl font-bold" id="totalExpense">₹0</p>
+        </div>
+        <div class="bg-blue-100 p-4 rounded-lg">
+          <h3 class="text-gray-600">Balance</h3>
+          <p class="text-2xl font-bold" id="balance">₹0</p>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div class="flex gap-4 mb-4">
+          <button
+            onclick="updateChart('weekly')"
+            class="bg-blue-500 text-white px-4 py-2 rounded-md"
+          >
+            Weekly
+          </button>
+          <button
+            onclick="updateChart('monthly')"
+            class="bg-blue-500 text-white px-4 py-2 rounded-md"
+          >
+            Monthly
+          </button>
+        </div>
+        <canvas id="myChart"></canvas>
+      </div>
+
+      <!-- Transaction List -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">Recent Transactions</h2>
+        <div id="transactions" class="space-y-2">
+          <!-- Transactions will be added here -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+      let myChart = null;
+
+      // Initialize chart
+      const ctx = document.getElementById("myChart").getContext("2d");
+      createChart("weekly");
+
+      // Form submit handler
+      document
+        .getElementById("transactionForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const transaction = {
+            id: Date.now(),
+            title: document.getElementById("title").value,
+            amount: parseFloat(document.getElementById("amount").value),
+            date: document.getElementById("date").value,
+            type: document.getElementById("type").value,
+          };
+
+          transactions.push(transaction);
+          updateLocalStorage();
+          updateUI();
+          this.reset();
+        });
+
+      function updateLocalStorage() {
+        localStorage.setItem("transactions", JSON.stringify(transactions));
+      }
+
+      function updateUI() {
+        // Update transactions list
+        const transactionsDiv = document.getElementById("transactions");
+        transactionsDiv.innerHTML = transactions
+          .map(
+            (transaction) => `
+                <div class="flex justify-between items-center p-3 border rounded-md">
+                    <div>
+                        <h3 class="font-semibold">${transaction.title}</h3>
+                        <p class="text-sm text-gray-500">${transaction.date}</p>
+                    </div>
+                    <p class="${
+                      transaction.type === "income"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }">
+                        ${transaction.type === "income" ? "+" : "-"}₹${
+              transaction.amount
+            }
+                    </p>
+                </div>
+            `
+          )
+          .join("");
+
+        // Update summary
+        const totalIncome = transactions
+          .filter((t) => t.type === "income")
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        const totalExpense = transactions
+          .filter((t) => t.type === "expense")
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        document.getElementById("totalIncome").textContent = `₹${totalIncome}`;
+        document.getElementById(
+          "totalExpense"
+        ).textContent = `₹${totalExpense}`;
+        document.getElementById("balance").textContent = `₹${
+          totalIncome - totalExpense
+        }`;
+
+        // Update chart
+        updateChart("weekly");
+      }
+
+      function createChart(type) {
+        if (myChart) myChart.destroy();
+
+        const data = getChartData(type);
+
+        myChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: data.labels,
+            datasets: [
+              {
+                label: "Amount",
+                data: data.amounts,
+                backgroundColor: "#3B82F6",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+      }
+
+      function updateChart(type) {
+        const data = getChartData(type);
+        myChart.data.labels = data.labels;
+        myChart.data.datasets[0].data = data.amounts;
+        myChart.update();
+      }
+
+      function getChartData(type) {
+        const now = new Date();
+        const filtered = transactions.filter((t) => {
+          const date = new Date(t.date);
+          const diff = type === "weekly" ? 7 : 30;
+          return now - date <= diff * 24 * 60 * 60 * 1000;
+        });
+
+        const grouped = filtered.reduce((acc, t) => {
+          const key =
+            type === "weekly"
+              ? `${t.date}`
+              : `Week ${Math.ceil(new Date(t.date).getDate() / 7)}`;
+
+          if (!acc[key]) acc[key] = 0;
+          acc[key] += t.type === "income" ? t.amount : -t.amount;
+          return acc;
+        }, {});
+
+        return {
+          labels: Object.keys(grouped),
+          amounts: Object.values(grouped),
+        };
+      }
+
+      // Initial UI update
+      updateUI();
+    </script>
+  </body>
+</html>
