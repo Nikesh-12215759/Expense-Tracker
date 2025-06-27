@@ -2,7 +2,7 @@
 
 A simple and intuitive web application to track your expenses, manage your budget, and visualize your spending habits.
 
-![screenshot](./assets/screenshot.png) <!-- Replace with your screenshot path -->
+ <!--![screenshot](./assets/screenshot.png) Replace with your screenshot path -->
 
 ---
 
@@ -20,19 +20,19 @@ A simple and intuitive web application to track your expenses, manage your budge
 ## 🛠️ Built With
 
 - **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Node.js / Express (if applicable)
-- **Database:** MongoDB / LocalStorage (depending on your implementation)
-- **Libraries:** Chart.js, Bootstrap (optional)
+- **Backend:** Node.js 
+- **Database:** LocalStorage
+- **Libraries:** Chart.js
 
 ---
 
 ## 📸 Screenshots
-
+<!--
 | Dashboard                        | Add Expense                     |
 | -------------------------------- | ------------------------------- |
 | ![Dashboard](./assets/dashboard.png) | ![Add Expense](./assets/add.png) |
 
----
+--->
 
 ## 🔧 Installation
 
